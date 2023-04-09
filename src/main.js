@@ -1,13 +1,6 @@
 //@ts-check
 
-const lang = require("./lang.js");
-const ClaudeModels = [
-    "claude-v1",
-    "claude-v1.0",
-    "claude-v1.2",
-    "claude-instant-v1",
-    "claude-instant-v1.0",
-];
+var lang = require("./lang.js");
 
 function supportLanguages() {
     return lang.supportLanguages.map(([standardLang]) => standardLang);
@@ -65,10 +58,10 @@ function generatePrompts(query) {
 }
 
 /**
- * @param {typeof ClaudeModels[number]} model
+ * @param {string} model
  * @param {Bob.TranslateQuery} query
  * @returns {{ 
- *  model: typeof ClaudeModels[number];
+ *  model: string;
  *  prompt: string;
  *  max_tokens_to_sample: number;
  *  stop_sequences: string[]
@@ -80,7 +73,7 @@ function buildRequestBody(model, query) {
     return {
         model,
         prompt: `\n\nHuman: ${prompt}\n\nAssistant: `,
-        max_tokens_to_sample: 2048,
+        max_tokens_to_sample: 1000,
         stop_sequences: [
             "\n\nHuman:"
         ],
@@ -162,7 +155,6 @@ function translate(query, completion) {
     const apiKeySelection = apiKeys.split(",").map(key => key.trim());
     const apiKey = apiKeySelection[Math.floor(Math.random() * apiKeySelection.length)];
     
-    const isChatGPTModel = ClaudeModels.includes(model);
     const apiUrlPath = "/v1/complete";
     
     const header = buildHeader(apiKey);
