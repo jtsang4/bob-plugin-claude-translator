@@ -52,4 +52,4 @@
 
 ## 感谢
 
-本仓库是在 [yetone](https://github.com/yetone) 优秀的 [bob-plugin-openai-translator](https://github.com/jtsang4/bob-plugin-claude-translator) 源码基础上对 Claude API 所做的适配，感谢原作者的卓越贡献。
+本仓库是在 [yetone](https://github.com/yetone) 优秀的 [bob-plugin-openai-translator](https://github.com/yetone/bob-plugin-openai-translator) 源码基础上对 Claude API 所做的适配，感谢原作者的卓越贡献。

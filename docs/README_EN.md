@@ -53,4 +53,4 @@ You can use the Claude API to polish and syntactically modify sentences, you jus
 
 ## Thanks
 
-This repository is based on the excellent [bob-plugin-openai-translator](https://github.com/jtsang4/bob-plugin-claude-translator) from [yetone](https://github.com/yetone) This is an adaptation of the Claude API based on the source code, thanks to the excellent contribution of the original author.
+This repository is based on the excellent [bob-plugin-openai-translator](https://github.com/yetone/bob-plugin-openai-translator) from [yetone](https://github.com/yetone) This is an adaptation of the Claude API based on the source code, thanks to the excellent contribution of the original author.
