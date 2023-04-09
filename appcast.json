@@ -1,5 +1,12 @@
 {
   "identifier": "jtsang.claude.translator",
   "versions": [
+    {
+      "version": "0.1.0",
+      "desc": "chore: improve documentation and others",
+      "sha256": "7dddd80ca7b0c27656da7f5d00a376d32f12af083407a3dd86b5d7cc79dfdb47",
+      "url": "https://github.com/jtsang4/bob-plugin-claude-translator/releases/download/v0.1.0/claude-translator-0.1.0.bobplugin",
+      "minBobVersion": "0.5.0"
+    }
   ]
 }
