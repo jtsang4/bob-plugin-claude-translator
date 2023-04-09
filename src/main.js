@@ -25,7 +25,7 @@ function buildHeader(apiKey) {
  * @returns {string}
 */
 function generatePrompts(query) {
-    let userPrompt = `Translate from ${lang.langMap.get(query.detectFrom) || query.detectFrom} to ${lang.langMap.get(query.detectTo) || query.detectTo}, only give the result`;
+    let userPrompt = `Translate from ${lang.langMap.get(query.detectFrom) || query.detectFrom} to ${lang.langMap.get(query.detectTo) || query.detectTo}, reply without any extra words or symbols not in the original text`;
 
     if (query.detectTo === "wyw" || query.detectTo === "yue") {
         userPrompt = `翻译成${lang.langMap.get(query.detectTo) || query.detectTo}`;
