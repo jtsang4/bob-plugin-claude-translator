@@ -8,51 +8,47 @@ body:
           value: |
             **非常感谢您的反馈！Thank you very much for your feedback!**
 
-            有关翻译错误的内容请附在此 [issue](https://github.com/yetone/bob-plugin-openai-translator/issues/30) 中。
-
-            Please post any translation-related errors in this [issue](https://github.com/yetone/bob-plugin-openai-translator/issues/30).
-
     - type: checkboxes
       attributes:
           label: Please search before asking
           description: |
-            辛苦提 Bug 前，检索一下 [问题](https://github.com/yetone/bob-plugin-openai-translator/issues?q=) 列表是否已经存在类似问题。麻烦提供系统版本、录屏或者截图、复现步骤，有助于更好的解决问题。
+            辛苦提 Bug 前，检索一下 [问题](https://github.com/jtsang4/bob-plugin-claude-translator/issues?q=) 列表是否已经存在类似问题。麻烦提供系统版本、录屏或者截图、复现步骤，有助于更好的解决问题。
 
-            Please search [issues](https://github.com/yetone/bob-plugin-openai-translator/issues) to check if your issue has already been reported.
+            Please search [issues](https://github.com/jtsang4/bob-plugin-claude-translator/issues) to check if your issue has already been reported.
 
           options:
               - label: >
-                    I searched in the [issues](https://github.com/yetone/bob-plugin-openai-translator/issues) and found nothing similar.
+                    I searched in the [issues](https://github.com/jtsang4/bob-plugin-claude-translator/issues) and found nothing similar.
                 required: true
     - type: checkboxes
       attributes:
           label: Please read README
           description: |
-            辛苦提 Bug 前，请确定是按照 README 中的 [使用方法](https://github.com/yetone/bob-plugin-openai-translator/tree/main#%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95) 部分安装的。
+            辛苦提 Bug 前，请确定是按照 README 中的 [使用方法](https://github.com/jtsang4/bob-plugin-claude-translator/tree/main#%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95) 部分安装的。
             
-            Before reporting bugs, please carefully read the [usage instructions]((https://github.com/yetone/bob-plugin-openai-translator/tree/main#%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95) section in README
+            Before reporting bugs, please carefully read the [usage instructions](https://github.com/jtsang4/bob-plugin-claude-translator/blob/main/docs/README_EN.md#usage) section in README
             
           options:
               - label: I have read the usage instructions section in README in detail.
                 required: true
     - type: checkboxes
       attributes:
-          label: Please check your network and OpenAI API quota
+          label: Please check your network
           description: |
-            如果您遇到的报错是 Failed to fetch 或者 API quota exceed，则说明是网络问题或者 OpenAI API 使用量超过阈值，这些问题都与 OpenAI Translator Bob Plugin 无关，请自行解决。
+            如果您遇到的报错是 Failed to fetch，则说明是网络问题，这些问题都与 Claude Translator Bob Plugin 无关，请自行解决。
             
-            If you encounter error messages such as 'Failed to fetch' or 'API quota exceed', it means there is a network issue or the usage limit of OpenAI API has been exceeded. These issues are not related to OpenAI Translator Bob Plugin, please resolve them on your own.
+            If you encounter error messages such as 'Failed to fetch', it means there is a network issue. These issues are not related to Claude Translator Bob Plugin, please resolve them on your own.
 
           options:
-              - label: I am sure it is not a network issue or an OpenAI API quota issue.
+              - label: I am sure it is not a network issue.
                 required: true
     - type: input
       attributes:
-          label: OpenAI Translator Bob Plugin version
+          label: Claude Translator Bob Plugin version
           description: |
-            请提供您正在使用的 OpenAI Translator Bob Plugin 的版本。
+            请提供您正在使用的 Claude Translator Bob Plugin 的版本。
             
-            Please provide the version of OpenAI Translator Bob Plugin you are using. For example, `v0.1.0`.
+            Please provide the version of Claude Translator Bob Plugin you are using. For example, `v0.1.0`.
       validations:
           required: true
     - type: input
@@ -99,9 +95,9 @@ body:
       attributes:
           label: 你是否愿意提交一份 PR 来修改这个错误？Are you willing to submit a PR?
           description: |
-            我们期待开发人员和用户的帮助，以解决在 OpenAI Translator Bob Plugin 中发现的任何问题。 如果您愿意通过提交 PR 来解决此问题，请勾选。
+            我们期待开发人员和用户的帮助，以解决在 Claude Translator Bob Plugin 中发现的任何问题。 如果您愿意通过提交 PR 来解决此问题，请勾选。
             
-            We eagerly anticipate developers' and users' support and collaboration in resolving any issues found in OpenAI Translator Bob Plugin. If you are willing to offer a solution by submitting a PR to fix this matter, kindly mark the checkbox provided.
+            We eagerly anticipate developers' and users' support and collaboration in resolving any issues found in Claude Translator Bob Plugin. If you are willing to offer a solution by submitting a PR to fix this matter, kindly mark the checkbox provided.
           options:
               - label: 我愿意提供 PR! I'm willing to submit a PR!
     - type: markdown

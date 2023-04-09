@@ -29,7 +29,7 @@ jobs:
           sed -i "s/$OLD_VERSION/${{ steps.get_version.outputs.version-without-v }}/" src/info.json
 
       - name: Package plugin
-        run: mkdir release && zip -j -r release/openai-translator-${{ steps.get_version.outputs.version-without-v }}.bobplugin ./src/*
+        run: mkdir release && zip -j -r release/claude-translator-${{ steps.get_version.outputs.version-without-v }}.bobplugin ./src/*
 
       - run: git checkout -- src/
 
@@ -53,8 +53,8 @@ jobs:
         with:
           release_name: ${{ steps.get_version.outputs.version }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: release/openai-translator-${{ steps.get_version.outputs.version-without-v }}.bobplugin
-          asset_name: openai-translator-${{ steps.get_version.outputs.version-without-v }}.bobplugin
+          file: release/claude-translator-${{ steps.get_version.outputs.version-without-v }}.bobplugin
+          asset_name: claude-translator-${{ steps.get_version.outputs.version-without-v }}.bobplugin
           tag: ${{ github.ref }}
           overwrite: true
           body: ${{ steps.tag.outputs.message }}

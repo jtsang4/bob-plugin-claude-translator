@@ -27,7 +27,7 @@
       "identifier": "model",
       "type": "menu",
       "title": "模型",
-      "defaultValue": "claude-instant-v1",
+      "defaultValue": "claude-v1.2",
       "menuValues": [
         {
           "title": "claude-v1",
@@ -38,11 +38,11 @@
           "value": "claude-v1.0"
         },
         {
-          "title": "claude-v1.2",
+          "title": "claude-v1.2 (recommended)",
           "value": "claude-v1.2"
         },
         {
-          "title": "claude-instant-v1 (recommended)",
+          "title": "claude-instant-v1",
           "value": "claude-instant-v1"
         },
         {
