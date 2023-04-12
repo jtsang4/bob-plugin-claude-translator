@@ -25,7 +25,7 @@ function buildHeader(apiKey) {
  * @returns {string}
 */
 function generatePrompts(query) {
-    let userPrompt = `Translate from ${lang.langMap.get(query.detectFrom) || query.detectFrom} to ${lang.langMap.get(query.detectTo) || query.detectTo}, reply without any extra words or symbols not in the original text`;
+    let userPrompt = `Translate from ${lang.langMap.get(query.detectFrom) || query.detectFrom} to ${lang.langMap.get(query.detectTo) || query.detectTo}`;
 
     if (query.detectTo === "wyw" || query.detectTo === "yue") {
         userPrompt = `翻译成${lang.langMap.get(query.detectTo) || query.detectTo}`;
@@ -48,11 +48,11 @@ function generatePrompts(query) {
         if (query.detectTo === "zh-Hant" || query.detectTo === "zh-Hans") {
             userPrompt = "润色此句";
         } else {
-            userPrompt = "polish this sentence";
+            userPrompt = "polish the sentence";
         }
     }
 
-    userPrompt = `$${userPrompt}:\n\n"${query.text}" =>`
+    userPrompt = `${userPrompt}:\n\nHere is the content in <content> tag:\n\n<content>${query.text}</content>.\n\nReply the result in <response> tag.`
 
     return userPrompt;
 }
@@ -72,7 +72,7 @@ function buildRequestBody(model, query) {
     const prompt = generatePrompts(query);
     return {
         model,
-        prompt: `\n\nHuman: ${prompt}\n\nAssistant: `,
+        prompt: `\n\nHuman: ${prompt}\n\nAssistant: OK, here is the translation result: <response>`,
         max_tokens_to_sample: 1000,
         stop_sequences: [
             "\n\nHuman:"
@@ -125,6 +125,9 @@ function handleResponse(completion, query, result) {
     }
     if (targetText.endsWith('"') || targetText.endsWith("」")) {
         targetText = targetText.slice(0, -1);
+    }
+    if (targetText.endsWith("</response>")) {
+        targetText = targetText.slice(0, -11);
     }
 
     completion({
