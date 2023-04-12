@@ -52,7 +52,10 @@ function generatePrompts(query) {
         }
     }
 
-    userPrompt = `${userPrompt}:\n\nHere is the content in <content> tag:\n\n<content>${query.text}</content>.\n\nReply the result in <response> tag.`
+    userPrompt = `${userPrompt}:\n\n\
+Here is the text in "<content>" tag:\n\n\
+<content>${query.text}</content>.\n\n\
+Reply in <response> tag. Do not include the <content> tag used for wrapping original text.`
 
     return userPrompt;
 }
@@ -72,7 +75,7 @@ function buildRequestBody(model, query) {
     const prompt = generatePrompts(query);
     return {
         model,
-        prompt: `\n\nHuman: ${prompt}\n\nAssistant: OK, here is the translation result: <response>`,
+        prompt: `\n\nHuman: ${prompt}\n\nAssistant: OK, here is the result: <response>`,
         max_tokens_to_sample: 1000,
         stop_sequences: [
             "\n\nHuman:"
@@ -129,6 +132,7 @@ function handleResponse(completion, query, result) {
     if (targetText.endsWith("</response>")) {
         targetText = targetText.slice(0, -11);
     }
+    targetText = targetText.trim();
 
     completion({
         result: {

@@ -27,10 +27,10 @@
       "identifier": "model",
       "type": "menu",
       "title": "模型",
-      "defaultValue": "claude-v1.2",
+      "defaultValue": "claude-v1",
       "menuValues": [
         {
-          "title": "claude-v1",
+          "title": "claude-v1 (recommended)",
           "value": "claude-v1"
         },
         {
@@ -38,7 +38,7 @@
           "value": "claude-v1.0"
         },
         {
-          "title": "claude-v1.2 (recommended)",
+          "title": "claude-v1.2",
           "value": "claude-v1.2"
         },
         {
