@@ -33,6 +33,7 @@ You can use the Claude API to polish and syntactically modify sentences, you jus
 * `claude-v1`: Use the latest version of v1 automatically
 * `claude-v1.0`: Current default for claude-v1
 * `claude-v1.2` (default): [Early access for evaluation] Improved version of claude-v1
+* `claude-v1.3`: A significantly improved version of claude-v1. Compared to claude-v1.2, it's more robust and precise
 * `claude-instant-v1`: A cut-down version of claude-v1, with faster response speed, but slightly worse effect
 * `claude-instant-v1.0`: Current default for claude-instant-v1
 
