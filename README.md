@@ -31,11 +31,16 @@
 ### 语言模型
 
 * `claude-v1`: 自动使用 v1 的最新版
-* `claude-v1.0`: claude-v1 的当前版本
-* `claude-v1.2` (默认使用): [早期评估版本] claude-v1 的改进版本
-* `claude-v1.3`: claude-v1 的重大改进版，更加强大精确
+* `claude-v1-100k`: 一个增强版的 claude-v1,具有10万个标记(大约75000个单词)的上下文窗口
+* `claude-v1.0`: claude-v1 的早期版本
+* `claude-v1.2`: claude-v1 的改进版本
+* `claude-v1.3` (默认使用): claude-v1 的重大改进版，更加强大精确
+* `claude-v1.3-100k`: 一个增强版的 claude-v1.3,具有10万个标记(大约75000个单词)的上下文窗口
 * `claude-instant-v1`: claude-v1 的裁剪版，响应速度快，效果略差一些
-* `claude-instant-v1.0`: claude-instant-v1 的当前版本
+* `claude-instant-v1-100k`: 一个增强版的 claude-instant-v1,具有10万个标记(大约75000个单词)的上下文窗口
+* `claude-instant-v1.0`: claude-instant-v1 的早期版本
+* `claude-instant-v1.1`: claude-instant-v1 的当前版本
+* `claude-instant-v1.1-100k`: 一个增强版的 claude-instant-v1.1-100k,具有10万个标记(大约75000个单词)的上下文窗口
 
 ## 使用方法
 
