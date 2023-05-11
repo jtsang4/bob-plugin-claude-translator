@@ -2,6 +2,13 @@
   "identifier": "jtsang.claude.translator",
   "versions": [
     {
+      "version": "0.3.0",
+      "desc": "chore: support 100k context window model",
+      "sha256": "7d73515ed199221363cbc859e2b8a4f24bb973bd89d2f644df3c06880e920070",
+      "url": "https://github.com/jtsang4/bob-plugin-claude-translator/releases/download/v0.3.0/claude-translator-0.3.0.bobplugin",
+      "minBobVersion": "0.5.0"
+    },
+    {
       "version": "0.2.0",
       "desc": "feat: support claude-v1.3",
       "sha256": "85b786b30ac6aae506ff4c7b3c5163af552fa6c83b98dc953d6bbfcfa5a5f001",
