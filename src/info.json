@@ -27,11 +27,15 @@
       "identifier": "model",
       "type": "menu",
       "title": "模型",
-      "defaultValue": "claude-v1",
+      "defaultValue": "claude-v1.3",
       "menuValues": [
         {
-          "title": "claude-v1 (recommended)",
+          "title": "claude-v1",
           "value": "claude-v1"
+        },
+        {
+          "title": "claude-v1-100k",
+          "value": "claude-v1-100k"
         },
         {
           "title": "claude-v1.0",
@@ -42,16 +46,32 @@
           "value": "claude-v1.2"
         },
         {
-          "title": "claude-v1.3",
+          "title": "claude-v1.3 (recommended)",
           "value": "claude-v1.3"
+        },
+        {
+          "title": "claude-v1.3-100k",
+          "value": "claude-v1.3-100k"
         },
         {
           "title": "claude-instant-v1",
           "value": "claude-instant-v1"
         },
         {
+          "title": "claude-instant-v1-100k",
+          "value": "claude-instant-v1-100k"
+        },
+        {
           "title": "claude-instant-v1.0",
           "value": "claude-instant-v1.0"
+        },
+        {
+          "title": "claude-instant-v1.1",
+          "value": "claude-instant-v1.1"
+        },
+        {
+          "title": "claude-instant-v1.1-100k",
+          "value": "claude-instant-v1.1-100k"
         }
       ]
     }
