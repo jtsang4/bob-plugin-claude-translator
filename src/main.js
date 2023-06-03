@@ -25,10 +25,11 @@ function buildHeader(apiKey) {
  * @returns {string}
 */
 function generatePrompts(query) {
-    let userPrompt = `Translate from ${lang.langMap.get(query.detectFrom) || query.detectFrom} to ${lang.langMap.get(query.detectTo) || query.detectTo}`;
+    const translationPrefixPrompt = 'Translate below text in triple backticks'
+    let userPrompt = `${translationPrefixPrompt} from ${lang.langMap.get(query.detectFrom) || query.detectFrom} to ${lang.langMap.get(query.detectTo) || query.detectTo}`;
 
     if (query.detectTo === "wyw" || query.detectTo === "yue") {
-        userPrompt = `翻译成${lang.langMap.get(query.detectTo) || query.detectTo}`;
+        userPrompt = `${translationPrefixPrompt} to ${lang.langMap.get(query.detectTo) || query.detectTo}`;
     }
 
     if (
@@ -37,25 +38,22 @@ function generatePrompts(query) {
         query.detectFrom === "zh-Hant"
     ) {
         if (query.detectTo === "zh-Hant") {
-            userPrompt = "翻译成繁体白话文";
+            userPrompt = `${translationPrefixPrompt} to traditional Chinese`;
         } else if (query.detectTo === "zh-Hans") {
-            userPrompt = "翻译成简体白话文";
+            userPrompt = `${translationPrefixPrompt} to simplified Chinese`;
         } else if (query.detectTo === "yue") {
-            userPrompt = "翻译成粤语白话文";
+            userPrompt = `${translationPrefixPrompt} to Cantonese`;
         }
     }
     if (query.detectFrom === query.detectTo) {
-        if (query.detectTo === "zh-Hant" || query.detectTo === "zh-Hans") {
-            userPrompt = "润色此句";
-        } else {
-            userPrompt = "polish the sentence";
-        }
+        userPrompt = `Polish the sentence in triple backticks to ${query.detectTo}`;
     }
 
-    userPrompt = `${userPrompt}:\n\n\
-Here is the text in "<content>" tag:\n\n\
-<content>${query.text}</content>.\n\n\
-Reply in <response> tag. Do not include the <content> tag used for wrapping original text.`
+    userPrompt = `${userPrompt}:\n
+\`\`\`
+${query.text}
+\`\`\`
+Just give me the result without any extra words or symbol.`
 
     return userPrompt;
 }
@@ -69,30 +67,32 @@ Reply in <response> tag. Do not include the <content> tag used for wrapping orig
  *  max_tokens_to_sample: number;
  *  stop_sequences: string[]
  *  temperature: number;
+ *  stream: boolean;
  * }}
 */
 function buildRequestBody(model, query) {
     const prompt = generatePrompts(query);
     return {
         model,
-        prompt: `\n\nHuman: ${prompt}\n\nAssistant: OK, here is the result: <response>`,
+        prompt: `\n\nHuman: ${prompt}\n\nAssistant: OK, here is the result:`,
         max_tokens_to_sample: 1000,
         stop_sequences: [
             "\n\nHuman:"
         ],
         temperature: 0,
+        stream: true,
     };
 }
 
 /**
- * @param {Bob.Completion} completion
+ * @param {Bob.TranslateQuery} query
  * @param {Bob.HttpResponse} result
  * @returns {void}
 */
-function handleError(completion, result) {
+function handleError(query, result) {
     const { statusCode } = result.response;
     const reason = (statusCode >= 400 && statusCode < 500) ? "param" : "api";
-    completion({
+    query.onCompletion({
         error: {
             type: reason,
             message: `接口响应错误 - ${result.data.detail}`,
@@ -102,53 +102,63 @@ function handleError(completion, result) {
 }
 
 /**
- * @param {Bob.Completion} completion
  * @param {Bob.TranslateQuery} query
- * @param {Bob.HttpResponse} result
- * @returns {void}
+ * @param {string} targetText
+ * @param {string} textFromResponse
+ * @returns {string}
 */
-function handleResponse(completion, query, result) {
-    const { completion: resultText } = result.data;
-
-    if (!resultText) {
-        completion({
-            error: {
-                type: "api",
-                message: "接口未返回结果",
-                addtion: JSON.stringify(result),
-            },
-        });
-        return;
+function handleResponse(query, targetText, textFromResponse) {
+    let resultText = targetText;
+    if (textFromResponse !== '[DONE]') {
+        try {
+            const currentResponse = JSON.parse(textFromResponse);
+            const currentCompletion = currentResponse['completion'];
+            if (!currentCompletion) {
+                query.onCompletion({
+                    error: {
+                        type: "api",
+                        message: "接口未返回结果",
+                        addtion: textFromResponse,
+                    },
+                });
+                return resultText;
+            }
+            resultText = currentCompletion;
+        
+            if (resultText.startsWith('"') || resultText.startsWith("「")) {
+                resultText = resultText.slice(1);
+            }
+            if (resultText.endsWith('"') || resultText.endsWith("」")) {
+                resultText = resultText.slice(0, -1);
+            }
+            resultText = resultText.trim();
+            query.onStream({
+                result: {
+                    from: query.detectFrom,
+                    to: query.detectTo,
+                    toParagraphs: [resultText],
+                },
+            });
+            return resultText;
+        } catch (err) {
+            query.onCompletion({
+                error: {
+                    type: err._type || "param",
+                    message: err.message || "JSON 解析错误",
+                    addtion: err._addition,
+                },
+            });
+        }
     }
-
-    let targetText = resultText.trim();
-
-    if (targetText.startsWith('"') || targetText.startsWith("「")) {
-        targetText = targetText.slice(1);
-    }
-    if (targetText.endsWith('"') || targetText.endsWith("」")) {
-        targetText = targetText.slice(0, -1);
-    }
-    if (targetText.endsWith("</response>")) {
-        targetText = targetText.slice(0, -11);
-    }
-    targetText = targetText.trim();
-
-    completion({
-        result: {
-            from: query.detectFrom,
-            to: query.detectTo,
-            toParagraphs: targetText.split("\n"),
-        },
-    });
+    return resultText;
 }
 
 /**
  * @type {Bob.Translate}
  */
-function translate(query, completion) {
+function translate(query) {
     if (!lang.langMap.get(query.detectTo)) {
-        completion({
+        query.onCompletion({
             error: {
                 type: "unsupportLanguage",
                 message: "不支持该语种",
@@ -157,9 +167,18 @@ function translate(query, completion) {
         });
     }
 
-    const { model, apiKeys, apiUrl } = $option;
+    const { model, apiKeys = '', apiUrl } = $option;
 
     const apiKeySelection = apiKeys.split(",").map(key => key.trim());
+    if (!apiKeySelection.length) {
+        query.onCompletion({
+            error: {
+                type: "secretKey",
+                message: "配置错误 - 未填写 API Keys",
+                addtion: "请在插件配置中填写 API Keys",
+            },
+        })
+    }
     const apiKey = apiKeySelection[Math.floor(Math.random() * apiKeySelection.length)];
     
     const apiUrlPath = "/v1/complete";
@@ -168,20 +187,35 @@ function translate(query, completion) {
     const body = buildRequestBody(model, query);
 
     (async () => {
-        const result = await $http.request({
+        let targetText = '';
+        await $http.streamRequest({
             method: "POST",
             url: apiUrl + apiUrlPath,
             header,
             body,
+            cancelSignal: query.cancelSignal,
+            streamHandler: (streamData) => {
+                const line = streamData.text.split('\n')[0].trim();
+                const match = line.startsWith('data:') ? line.slice(5) : line;
+                const textFromResponse = match.trim();
+                targetText = handleResponse(query, targetText, textFromResponse);
+            },
+            handler: (result) => {
+                if (result.error || result.response.statusCode >= 400) {
+                    handleError(query, result);
+                } else {
+                    query.onCompletion({
+                        result: {
+                            from: query.detectFrom,
+                            to: query.detectTo,
+                            toParagraphs: [targetText],
+                        },
+                    });
+                }
+            },
         });
-
-        if (result.error) {
-            handleError(completion, result);
-        } else {
-            handleResponse(completion, query, result);
-        }
     })().catch((err) => {
-        completion({
+        query.onCompletion({
             error: {
                 type: err._type || "unknown",
                 message: err._message || "未知错误",
