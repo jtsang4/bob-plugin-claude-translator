@@ -30,17 +30,9 @@ You can use the Claude API to polish and syntactically modify sentences, you jus
 
 ### Language Model
 
-* `claude-v1`: Use the latest version of v1 automatically
-* `claude-v1-100k`: An enhanced version of claude-v1 with a 100,000 token (roughly 75,000 word) context window.
-* `claude-v1.0`: Current default for claude-v1
-* `claude-v1.2`: Earlier version of claude-v1
-* `claude-v1.3` (default): A significantly improved version of claude-v1. Compared to claude-v1.2, it's more robust and precise
-* `claude-v1.3-100k`: An enhanced version of claude-v1.3 with a 100,000 token (roughly 75,000 word) context window
-* `claude-instant-v1`: A cut-down version of claude-v1, with faster response speed, but slightly worse effect
-* `claude-instant-v1-100k`: An enhanced version of claude-instant-v1 with a 100,000 token context window that retains its performance
-* `claude-instant-v1.0`: Earlier version of claude-instant-v1
-* `claude-instant-v1.1`: Current default for claude-instant-v1
-* `claude-instant-v1.1-100k`: An enhanced version of claude-instant-v1.1 with a 100,000 token context window that retains its performance
+* `claude-v1.3` (default): claude-v1 old version, the test results are relatively stable
+* `claude-instant-1`: the latest instant model of claude
+* `claude-2`: the latest model of claude
 
 ## Usage
 
