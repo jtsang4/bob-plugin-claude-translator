@@ -2,6 +2,13 @@
   "identifier": "jtsang.claude.translator",
   "versions": [
     {
+      "version": "0.4.2",
+      "desc": "fix: fix identifier",
+      "sha256": "f826046e72eeafbdafbbbec6e82347b8fb9dc8b00834cba772ee21ac81c81fe3",
+      "url": "https://github.com/jtsang4/bob-plugin-claude-translator/releases/download/v0.4.2/claude-translator-0.4.2.bobplugin",
+      "minBobVersion": "0.5.0"
+    },
+    {
       "version": "0.4.1",
       "desc": "doc: update README about claude-2 model",
       "sha256": "ff7ce3af023e07fb378e70ac310184832c289a02e3da1842f9b7c4a4b495cf27",
