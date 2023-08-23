@@ -20,7 +20,7 @@ function buildHeader(apiKey) {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
+        "anthropic-version": "2023-01-01",
     };
 }
 
@@ -127,7 +127,7 @@ function handleResponse(query, targetText, responseObj) {
             });
             return resultText;
         }
-        resultText = targetText + currentResponse['completion'];
+        resultText = currentResponse['completion'];
         query.onStream({
             result: {
                 from: query.detectFrom,
