@@ -208,9 +208,11 @@ function translate(query) {
                     buffer += splitedText[0];
                     const match = buffer.startsWith('data:') ? buffer.slice(5) : buffer;
                     const textFromResponse = match.trim();
-                    const responseObj = JSON.parse(textFromResponse);
-                    targetText = handleResponse(query, targetText, responseObj);
-                    buffer = '';
+                    if (textFromResponse !== '[DONE]') {
+                        const responseObj = JSON.parse(textFromResponse);
+                        targetText = handleResponse(query, targetText, responseObj);
+                        buffer = '';
+                    }
                 }
             },
             handler: (result) => {
