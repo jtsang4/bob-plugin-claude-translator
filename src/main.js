@@ -9,14 +9,18 @@ function supportLanguages() {
 /**
  * @param {string} apiKey - The authentication API key.
  * @returns {{
-*   "Content-Type": string;
-*   "x-api-key": string;
-* }} The header object.
-*/
+ *   "Accept": string;
+ *   "Content-Type": string;
+ *   "x-api-key": string;
+ *   "anthropic-version": string;
+ * }} The header object.
+ */
 function buildHeader(apiKey) {
     return {
+        "Accept": "application/json",
         "Content-Type": "application/json",
         "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
     };
 }
 
@@ -25,11 +29,11 @@ function buildHeader(apiKey) {
  * @returns {string}
 */
 function generatePrompts(query) {
-    const translationPrefixPrompt = 'Translate below text in triple backticks'
-    let userPrompt = `${translationPrefixPrompt} from ${lang.langMap.get(query.detectFrom) || query.detectFrom} to ${lang.langMap.get(query.detectTo) || query.detectTo}`;
+    const translationPrefixPrompt = 'Please translate below text'
+    let userPrompt = `${translationPrefixPrompt} from "${lang.langMap.get(query.detectFrom) || query.detectFrom}" to "${lang.langMap.get(query.detectTo) || query.detectTo}"`;
 
     if (query.detectTo === "wyw" || query.detectTo === "yue") {
-        userPrompt = `${translationPrefixPrompt} to ${lang.langMap.get(query.detectTo) || query.detectTo}`;
+        userPrompt = `${translationPrefixPrompt} to "${lang.langMap.get(query.detectTo) || query.detectTo}"`;
     }
 
     if (
@@ -46,14 +50,16 @@ function generatePrompts(query) {
         }
     }
     if (query.detectFrom === query.detectTo) {
-        userPrompt = `Polish the sentence in triple backticks to ${query.detectTo}`;
+        userPrompt = `Polish the sentence in triple backticks to "${query.detectTo}"`;
     }
 
     userPrompt = `${userPrompt}:\n
 \`\`\`
 ${query.text}
 \`\`\`
-Just give me the result without any extra words or symbol.`
+
+Do not add any content or symbols that does not exist in the original text.
+`
 
     return userPrompt;
 }
@@ -74,12 +80,12 @@ function buildRequestBody(model, query) {
     const prompt = generatePrompts(query);
     return {
         model,
-        prompt: `\n\nHuman: ${prompt}\n\nAssistant: OK, here is the result:`,
-        max_tokens_to_sample: 1000,
+        prompt: `\n\nHuman: ${prompt}\n\nAssistant: OK, this is the translation result: `,
+        max_tokens_to_sample: 100000,
         stop_sequences: [
             "\n\nHuman:"
         ],
-        temperature: 0,
+        temperature: 0.7,
         stream: true,
     };
 }
@@ -104,51 +110,40 @@ function handleError(query, result) {
 /**
  * @param {Bob.TranslateQuery} query
  * @param {string} targetText
- * @param {string} textFromResponse
+ * @param {string} responseObj
  * @returns {string}
 */
-function handleResponse(query, targetText, textFromResponse) {
+function handleResponse(query, targetText, responseObj) {
     let resultText = targetText;
-    if (textFromResponse !== '[DONE]') {
-        try {
-            const currentResponse = JSON.parse(textFromResponse);
-            const currentCompletion = currentResponse['completion'];
-            if (!currentCompletion) {
-                query.onCompletion({
-                    error: {
-                        type: "api",
-                        message: "接口未返回结果",
-                        addtion: textFromResponse,
-                    },
-                });
-                return resultText;
-            }
-            resultText = currentCompletion;
-        
-            if (resultText.startsWith('"') || resultText.startsWith("「")) {
-                resultText = resultText.slice(1);
-            }
-            if (resultText.endsWith('"') || resultText.endsWith("」")) {
-                resultText = resultText.slice(0, -1);
-            }
-            resultText = resultText.trim();
-            query.onStream({
-                result: {
-                    from: query.detectFrom,
-                    to: query.detectTo,
-                    toParagraphs: [resultText],
+    try {
+        const currentResponse = responseObj;
+        if (!currentResponse.hasOwnProperty('completion')) {
+            query.onCompletion({
+                error: {
+                    type: "api",
+                    message: "接口未返回结果",
+                    addtion: JSON.stringify(responseObj),
                 },
             });
             return resultText;
-        } catch (err) {
-            query.onCompletion({
-                error: {
-                    type: err._type || "param",
-                    message: err.message || "JSON 解析错误",
-                    addtion: err._addition,
-                },
-            });
         }
+        resultText = targetText + currentResponse['completion'];
+        query.onStream({
+            result: {
+                from: query.detectFrom,
+                to: query.detectTo,
+                toParagraphs: [resultText],
+            },
+        });
+        return resultText;
+    } catch (err) {
+        query.onCompletion({
+            error: {
+                type: err._type || "param",
+                message: err.message || "JSON 解析错误",
+                addtion: err._addition,
+            },
+        });
     }
     return resultText;
 }
@@ -167,7 +162,7 @@ function translate(query) {
         });
     }
 
-    const { model, apiKeys = '', apiUrl } = $option;
+    const { model, apiKeys = '', apiUrl = 'https://api.anthropic.com' } = $option;
 
     const apiKeySelection = apiKeys.split(",").map(key => key.trim());
     if (!apiKeySelection.length) {
@@ -188,6 +183,7 @@ function translate(query) {
 
     (async () => {
         let targetText = '';
+        let buffer = '';
         await $http.streamRequest({
             method: "POST",
             url: apiUrl + apiUrlPath,
@@ -195,10 +191,27 @@ function translate(query) {
             body,
             cancelSignal: query.cancelSignal,
             streamHandler: (streamData) => {
-                const line = streamData.text.split('\n')[0].trim();
-                const match = line.startsWith('data:') ? line.slice(5) : line;
-                const textFromResponse = match.trim();
-                targetText = handleResponse(query, targetText, textFromResponse);
+                const splitedText = streamData.text.split('\n');
+                if (splitedText[0] && splitedText[0].trim() === 'event: completion') {
+                    const line = splitedText[1].trim();
+                    const match = line.startsWith('data:') ? line.slice(5) : line;
+                    const textFromResponse = match.trim();
+                    try {
+                        if (textFromResponse !== '[DONE]' && !textFromResponse.includes('"completion":""')) {
+                            const responseObj = JSON.parse(textFromResponse);
+                            targetText = handleResponse(query, targetText, responseObj);
+                        }
+                    } catch (err) {
+                        buffer = splitedText[1];
+                    }                    
+                } else if (splitedText[0] && !['event: completion', 'event: ping'].includes(splitedText[0].trim())) {
+                    buffer += splitedText[0];
+                    const match = buffer.startsWith('data:') ? buffer.slice(5) : buffer;
+                    const textFromResponse = match.trim();
+                    const responseObj = JSON.parse(textFromResponse);
+                    targetText = handleResponse(query, targetText, responseObj);
+                    buffer = '';
+                }
             },
             handler: (result) => {
                 if (result.error || result.response.statusCode >= 400) {
