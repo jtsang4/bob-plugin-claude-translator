@@ -24,6 +24,18 @@
       "desc": "可以用英文逗号分割多个 API KEY 以实现额度加倍及负载均衡"
     },
     {
+      "identifier": "request_mode",
+      "type": "menu",
+      "title": "请求方式",
+      "defaultValue": "stream",
+      "menuValues": [
+        {
+          "title": "流式请求",
+          "value": "stream"
+        }
+      ]
+    },
+    {
       "identifier": "model",
       "type": "menu",
       "title": "模型",

@@ -155,6 +155,13 @@ function handleResponse(query, targetText, responseObj) {
                 if (delta && delta.type === "text_delta") {
                     resultText += delta.text;
                 }
+                query.onStream({
+                  result: {
+                    from: query.detectFrom,
+                    to: query.detectTo,
+                    toParagraphs: [resultText],
+                },
+                });
                 break;
             case "content_block_stop":
                 // 如有必要，处理 content_block_stop 事件
