@@ -1,6 +1,6 @@
 {
   "identifier": "jtsang.claude.translator",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "category": "translate",
   "name": "Claude Translator",
   "summary": "Claude powered translator",
@@ -24,22 +24,34 @@
       "desc": "可以用英文逗号分割多个 API KEY 以实现额度加倍及负载均衡"
     },
     {
+      "identifier": "request_mode",
+      "type": "menu",
+      "title": "请求方式",
+      "defaultValue": "stream",
+      "menuValues": [
+        {
+          "title": "流式请求",
+          "value": "stream"
+        }
+      ]
+    },
+    {
       "identifier": "model",
       "type": "menu",
       "title": "模型",
-      "defaultValue": "claude-v1.3",
+      "defaultValue": "claude-2.1",
       "menuValues": [
         {
-          "title": "claude-v1.3 (recommended)",
-          "value": "claude-v1.3"
+          "title": "Claude 2.1",
+          "value": "claude-2.1"
         },
         {
-          "title": "claude-2",
-          "value": "claude-2"
+          "title": "Claude 3 Opus",
+          "value": "claude-3-opus-20240229"
         },
         {
-          "title": "claude-instant-1",
-          "value": "claude-instant-1"
+          "title": "Claude 3 Sonnet",
+          "value": "claude-3-sonnet-20240229"
         }
       ]
     }
