@@ -52,6 +52,10 @@
         {
           "title": "Claude 3 Sonnet",
           "value": "claude-3-sonnet-20240229"
+        },
+        {
+          "title": "Claude 3 Haiku",
+          "value": "claude-3-haiku-20240307"
         }
       ]
     }
