@@ -1,6 +1,6 @@
 {
   "identifier": "jtsang.claude.translator",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "category": "translate",
   "name": "Claude Translator",
   "summary": "Claude powered translator",

@@ -2,6 +2,13 @@
   "identifier": "jtsang.claude.translator",
   "versions": [
     {
+      "version": "0.5.4",
+      "desc": "Merge pull request #12 from ShuaiJerry/main",
+      "sha256": "35a1d39239138f2ca49691bfeb6b4af759a2bfe5b574e21f947aa310c11b7df0",
+      "url": "https://github.com/jtsang4/bob-plugin-claude-translator/releases/download/v0.5.4/claude-translator-0.5.4.bobplugin",
+      "minBobVersion": "0.5.0"
+    },
+    {
       "version": "0.5.3",
       "desc": "Merge pull request #10 from JayDaniel/main",
       "sha256": "81577b975b78f5fca7ad7b54e5f06c5c1f8845088c36a091d489560a8d62fa2d",
