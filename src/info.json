@@ -59,7 +59,7 @@
         },
         {
           "title": "Claude 3.5 Sonnet",
-          "value": "claude-3-5-sonnet-2024062"
+          "value": "claude-3-5-sonnet-20240620"
         }
       ]
     }
