@@ -29,11 +29,12 @@ function buildHeader(apiKey) {
  * @param {Bob.TranslateQuery} query
  * @returns {string}
  */
+
 function generatePrompts(query) {
   const sourceLanguage = lang.langMap.get(query.detectFrom) || query.detectFrom;
   const targetLanguage = lang.langMap.get(query.detectTo) || query.detectTo;
 
-  return `Translate the following text from ${sourceLanguage} to ${targetLanguage}. Output only the translated text without any additional commentary, introductions, or explanations:
+  return `Translate from ${sourceLanguage} to ${targetLanguage}. Preserve meaning and style. Do not add or remove information. Only output the translation:
 
 ${query.text}`;
 }
