@@ -31,43 +31,22 @@ function buildHeader(apiKey) {
  * @returns {string}
  */
 function generatePrompts(query) {
-  const translationPrefixPrompt = 'Please translate below text';
-  let userPrompt = `${translationPrefixPrompt} from "${
-    lang.langMap.get(query.detectFrom) || query.detectFrom
-  }" to "${lang.langMap.get(query.detectTo) || query.detectTo}"`;
+  const sourceLanguage = lang.langMap.get(query.detectFrom) || query.detectFrom;
+  const targetLanguage = lang.langMap.get(query.detectTo) || query.detectTo;
 
-  if (query.detectTo === 'wyw' || query.detectTo === 'yue') {
-    userPrompt = `${translationPrefixPrompt} to "${
-      lang.langMap.get(query.detectTo) || query.detectTo
-    }"`;
-  }
-
-  if (
-    query.detectFrom === 'wyw' ||
-    query.detectFrom === 'zh-Hans' ||
-    query.detectFrom === 'zh-Hant'
-  ) {
-    if (query.detectTo === 'zh-Hant') {
-      userPrompt = `${translationPrefixPrompt} to traditional Chinese`;
-    } else if (query.detectTo === 'zh-Hans') {
-      userPrompt = `${translationPrefixPrompt} to simplified Chinese`;
-    } else if (query.detectTo === 'yue') {
-      userPrompt = `${translationPrefixPrompt} to Cantonese`;
-    }
-  }
-  if (query.detectFrom === query.detectTo) {
-    userPrompt = `Polish the sentence in triple backticks to "${query.detectTo}"`;
-  }
-
-  userPrompt = `${userPrompt}:\n
-\`\`\`
+  return `You are tasked with translating a given text from one language to another. Your goal is to provide an accurate translation without adding any additional content or commentary.
+The source language is:
+<source_language>
+${sourceLanguage}
+</source_language>
+The target language is:
+<target_language>
+${targetLanguage}
+</target_language>
+Here is the text to be translated:
+<text_to_translate>
 ${query.text}
-\`\`\`
-
-Do not add any content or symbols that does not exist in the original text.
-`;
-
-  return userPrompt;
+</text_to_translate>`;
 }
 
 /**
@@ -82,10 +61,16 @@ Do not add any content or symbols that does not exist in the original text.
  */
 function buildRequestBody(model, query) {
   const prompt = generatePrompts(query);
+  const systemMessage = "You are a highly skilled translator. Your task is to accurately translate the given text while preserving its original meaning, tone, and style. Do not add or remove any information.";
+  
   $log.info(prompt);
   return {
     model,
     messages: [
+      {
+        role: 'system',
+        content: systemMessage
+      },
       {
         role: 'user',
         content: prompt,
@@ -115,6 +100,7 @@ function handleError(query, result) {
     },
   });
 }
+
 /**
  * 解析流事件数据并根据事件类型进行处理
  * @param {string} line 从流中接收到的一行数据
