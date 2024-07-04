@@ -33,19 +33,9 @@ function generatePrompts(query) {
   const sourceLanguage = lang.langMap.get(query.detectFrom) || query.detectFrom;
   const targetLanguage = lang.langMap.get(query.detectTo) || query.detectTo;
 
-  return `You are tasked with translating a given text from one language to another. Your goal is to provide an accurate translation without adding any additional content or commentary.
-The source language is:
-<source_language>
-${sourceLanguage}
-</source_language>
-The target language is:
-<target_language>
-${targetLanguage}
-</target_language>
-Here is the text to be translated:
-<text_to_translate>
-${query.text}
-</text_to_translate>`;
+  return `Translate the following text from ${sourceLanguage} to ${targetLanguage}. Output only the translated text without any additional commentary, introductions, or explanations:
+
+${query.text}`;
 }
 
 /**
@@ -60,7 +50,7 @@ ${query.text}
  */
 function buildRequestBody(model, query) {
   const prompt = generatePrompts(query);
-  const systemMessage = "You are a highly skilled translator. Your task is to accurately translate the given text while preserving its original meaning, tone, and style. Do not add or remove any information.";
+  const systemMessage = "You are a translator. Your task is to accurately translate the given text while preserving its original meaning, tone, and style. Respond only with the translated text. Do not add any explanations, introductions, or other text.";
   
   $log.info(prompt);
   return {
