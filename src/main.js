@@ -22,7 +22,6 @@ function buildHeader(apiKey) {
     'Content-Type': 'application/json',
     'x-api-key': apiKey,
     'anthropic-version': '2023-06-01',
-    'anthropic-beta': 'messages-2023-12-15',
   };
 }
 
@@ -66,11 +65,8 @@ function buildRequestBody(model, query) {
   $log.info(prompt);
   return {
     model,
+    system: systemMessage,
     messages: [
-      {
-        role: 'system',
-        content: systemMessage
-      },
       {
         role: 'user',
         content: prompt,
