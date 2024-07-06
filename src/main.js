@@ -31,13 +31,39 @@ function buildHeader(apiKey) {
  */
 
 function generatePrompts(query) {
+  const translationPrefixPrompt = 'Please translate below text';
   const sourceLanguage = lang.langMap.get(query.detectFrom) || query.detectFrom;
   const targetLanguage = lang.langMap.get(query.detectTo) || query.detectTo;
+  
+  let userPrompt = '';
 
-  return `Translate from ${sourceLanguage} to ${targetLanguage}. Preserve meaning and style. Do not add or remove information. Only output the translation:
+  // 检查是否存在用户自定义提示
+  if ($option.user_translation_prompt && $option.user_translation_prompt.trim() !== '') {
+      // 使用用户自定义提示，替换语言占位符
+      userPrompt = $option.user_translation_prompt
+          .replace('${sourceLanguage}', sourceLanguage)
+          .replace('${targetLanguage}', targetLanguage);
+  } else {
+      // 使用默认提示
+      if (query.detectFrom === query.detectTo) {
+          userPrompt = `Polish the sentence in triple backticks to "${targetLanguage}"`;
+      } else {
+          userPrompt = `${translationPrefixPrompt} from "${sourceLanguage}" to "${targetLanguage}"`;
+      }
+  }
 
-${query.text}`;
+  // 添加文本和附加说明
+  userPrompt = `${userPrompt}:\n
+\`\`\`
+${query.text}
+\`\`\`
+Do not add any content or symbols that does not exist in the original text.
+`;
+
+  return userPrompt;
 }
+
+
 
 /**
  * @param {string} model
@@ -51,20 +77,26 @@ ${query.text}`;
  */
 function buildRequestBody(model, query) {
   const prompt = generatePrompts(query);
-  const systemMessage = "You are a translator. Your task is to accurately translate the given text while preserving its original meaning, tone, and style. Respond only with the translated text. Do not add any explanations, introductions, or other text.";
+  const systemMessage = $option.user_sys_prompt 
+      ? $option.user_sys_prompt
+          .replace('${sourceLanguage}', lang.langMap.get(query.detectFrom) || query.detectFrom)
+          .replace('${targetLanguage}', lang.langMap.get(query.detectTo) || query.detectTo)
+      : "You are a translator. Your task is to accurately translate the given text while preserving its original meaning, tone, and style. Respond only with the translated text. Do not add any explanations, introductions, or other text.";
   
-  $log.info(prompt);
+  $log.info("Prompt: " + prompt);
+  $log.info("System Message: " + systemMessage);
+
   return {
-    model,
-    system: systemMessage,
-    messages: [
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-    max_tokens: 4096,
-    stream: true,
+      model,
+      system: systemMessage,
+      messages: [
+          {
+              role: 'user',
+              content: prompt,
+          },
+      ],
+      max_tokens: 4096,
+      stream: true,
   };
 }
 
@@ -181,73 +213,72 @@ function handleResponse(query, targetText, responseObj) {
  */
 function translate(query) {
   if (!lang.langMap.get(query.detectTo)) {
-    query.onCompletion({
-      error: {
-        type: 'unsupportLanguage',
-        message: '不支持该语种',
-        addtion: '不支持该语种',
-      },
-    });
+      return query.onCompletion({
+          error: {
+              type: 'unsupportLanguage',
+              message: '不支持该语种',
+              addtion: '不支持该语种',
+          },
+      });
   }
 
   const { model, apiKeys = '', apiUrl = 'https://api.anthropic.com' } = $option;
-  const apiKeySelection = apiKeys.split(',').map((key) => key.trim());
+  const apiKeySelection = apiKeys.split(',').map((key) => key.trim()).filter(Boolean);
 
   if (!apiKeySelection.length) {
-    query.onCompletion({
-      error: {
-        type: 'secretKey',
-        message: '配置错误 - 未填写 API Keys',
-        addtion: '请在插件配置中填写 API Keys',
-      },
-    });
+      return query.onCompletion({
+          error: {
+              type: 'secretKey',
+              message: '配置错误 - 未填写 API Keys',
+              addtion: '请在插件配置中填写 API Keys',
+          },
+      });
   }
 
-  const apiKey =
-    apiKeySelection[Math.floor(Math.random() * apiKeySelection.length)];
+  const apiKey = apiKeySelection[Math.floor(Math.random() * apiKeySelection.length)];
   const apiUrlPath = '/v1/messages';
   const header = buildHeader(apiKey);
   const body = buildRequestBody(model, query);
 
   (async () => {
-    let targetText = '';
-
-    await $http.streamRequest({
-      method: 'POST',
-      url: apiUrl + apiUrlPath,
-      header,
-      body,
-      cancelSignal: query.cancelSignal,
-      streamHandler: (streamData) => {
-        const lines = streamData.text.split('\n');
-        for (const line of lines) {
-          const parsedData = parseStreamData(line);
-          if (!parsedData) continue; // 如果解析不到数据则跳过
-
-          if (parsedData.eventType) {
-            // 根据事件类型做一些操作，例如记录日志等
-            $log.info(`Received event: ${parsedData.eventType}`);
-          } else if (parsedData.data) {
-            // 这里调用 handleResponse 或其他函数处理具体数据
-            targetText = handleResponse(query, targetText, parsedData.data);
-          }
-        }
-      },
-      handler: (result) => {
-        if (result.error || result.response.statusCode >= 400) {
-          handleError(query, result);
-        }
-      },
-    });
-  })().catch((err) => {
-    query.onCompletion({
-      error: {
-        type: err._type || 'unknown',
-        message: err._message || '未知错误',
-        addtion: err._addition,
-      },
-    });
-  });
+      let targetText = '';
+      try {
+          await $http.streamRequest({
+              method: 'POST',
+              url: apiUrl + apiUrlPath,
+              header,
+              body,
+              cancelSignal: query.cancelSignal,
+              streamHandler: (streamData) => {
+                  const lines = streamData.text.split('\n');
+                  for (const line of lines) {
+                      const parsedData = parseStreamData(line);
+                      if (!parsedData) continue; // 如果解析不到数据则跳过
+                      if (parsedData.eventType) {
+                          // 根据事件类型做一些操作，例如记录日志等
+                          $log.info(`Received event: ${parsedData.eventType}`);
+                      } else if (parsedData.data) {
+                          // 这里调用 handleResponse 或其他函数处理具体数据
+                          targetText = handleResponse(query, targetText, parsedData.data);
+                      }
+                  }
+              },
+              handler: (result) => {
+                  if (result.error || result.response.statusCode >= 400) {
+                      handleError(query, result);
+                  }
+              },
+          });
+      } catch (err) {
+          query.onCompletion({
+              error: {
+                  type: err._type || 'unknown',
+                  message: err._message || '未知错误',
+                  addtion: err._addition,
+              },
+          });
+      }
+  })();
 }
 
 exports.supportLanguages = supportLanguages;

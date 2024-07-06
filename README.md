@@ -30,9 +30,9 @@
 
 ### 语言模型
 
-* `claude-v1.3` (默认使用): claude-v1 旧版本，效果稳定
-* `claude-instant-1`: claude 最新版 instant 模型
-* `claude-2`: claude 最新版模型
+* `claude 3 Haiku` Claude快速的模型
+* `claude 3.5 Sonnet`: Claude最新最智能模型（推荐使用）
+* `claude 3 Opus`: 适合复杂逻辑和写作的模型
 
 ## 使用方法
 
