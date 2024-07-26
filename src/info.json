@@ -67,7 +67,7 @@
       "identifier": "user_translation_prompt",
       "type": "text",
       "title": "Claude提示词",
-      "desc": "使用${sourceLanguage}表示源语言，${targetLanguage}表示目标语言"
+      "desc": "使用${sourceLanguage}表示源语言, ${targetLanguage}表示目标语言, ${query.text}表示用户输入的文本。"
     },
     {
       "identifier": "user_sys_prompt",
