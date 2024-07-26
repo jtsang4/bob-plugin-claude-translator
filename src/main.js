@@ -31,35 +31,29 @@ function buildHeader(apiKey) {
  */
 
 function generatePrompts(query) {
-  const translationPrefixPrompt = 'Please translate below text';
+  // const translationPrefixPrompt = 'Please translate below text';
   const sourceLanguage = lang.langMap.get(query.detectFrom) || query.detectFrom;
   const targetLanguage = lang.langMap.get(query.detectTo) || query.detectTo;
   
   let userPrompt = '';
 
-  // 检查是否存在用户自定义提示
+  if (query.detectFrom === query.detectTo) {
+    userPrompt = `Polish the following text, and the output must be in ${targetLanguage}:<user_query>${query.text}</user_query>`;
+} else {
   if ($option.user_translation_prompt && $option.user_translation_prompt.trim() !== '') {
       // 使用用户自定义提示，替换语言占位符
       userPrompt = $option.user_translation_prompt
           .replace('${sourceLanguage}', sourceLanguage)
-          .replace('${targetLanguage}', targetLanguage);
+          .replace('${targetLanguage}', targetLanguage)
+          .replace('${query.text}', query.text);
+          // .replace('${translationPrefixPrompt}', translationPrefixPrompt);
   } else {
-      // 使用默认提示
-      if (query.detectFrom === query.detectTo) {
-          userPrompt = `Polish the sentence in triple backticks to "${targetLanguage}"`;
-      } else {
-          userPrompt = `${translationPrefixPrompt} from "${sourceLanguage}" to "${targetLanguage}"`;
+      // If the target language is the same as the original text, do not translate the text, but instead polish it
+          userPrompt = `Translate from ${sourceLanguage} to ${targetLanguage}:
+<user_query>${query.text}</user_query>
+Translate only the content within the tags. Maintain original formatting and do not add or remove any content.`;
       }
   }
-
-  // 添加文本和附加说明
-  userPrompt = `${userPrompt}:\n
-\`\`\`
-${query.text}
-\`\`\`
-Do not add any content or symbols that does not exist in the original text.
-`;
-
   return userPrompt;
 }
 
