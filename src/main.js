@@ -13,7 +13,6 @@ function supportLanguages() {
  * "Content-Type": string;
  * "x-api-key": string;
  * "anthropic-version": string;
- * "anthropic-beta": string;
  * }} The header object.
  */
 function buildHeader(apiKey) {
@@ -22,52 +21,47 @@ function buildHeader(apiKey) {
     'Content-Type': 'application/json',
     'x-api-key': apiKey,
     'anthropic-version': '2023-06-01',
-    'anthropic-beta': 'messages-2023-12-15',
   };
 }
 
 /**
  * @param {Bob.TranslateQuery} query
- * @returns {string}
+ * @returns {{generatedSystemPrompt: string, generatedUserPrompt: string}}
  */
-function generatePrompts(query) {
-  const translationPrefixPrompt = 'Please translate below text';
-  let userPrompt = `${translationPrefixPrompt} from "${
-    lang.langMap.get(query.detectFrom) || query.detectFrom
-  }" to "${lang.langMap.get(query.detectTo) || query.detectTo}"`;
+function generatePrompts (query)  {
+ const SYSTEM_PROMPT = "You are an expert translator. Your task is to accurately translate the given text without altering its original meaning, tone, and style. Present only the translated result without any additional commentary.";
 
-  if (query.detectTo === 'wyw' || query.detectTo === 'yue') {
-    userPrompt = `${translationPrefixPrompt} to "${
-      lang.langMap.get(query.detectTo) || query.detectTo
-    }"`;
+  let generatedSystemPrompt = null;
+  const detectFrom =  query.detectFrom
+  const detectTo =  query.detectTo
+  const sourceLang = lang.langMap.get(detectFrom) || detectFrom;
+  const targetLang = lang.langMap.get(detectTo) || detectTo;
+  let generatedUserPrompt = `Please translate below text from ${sourceLang} to ${targetLang}. Present only the translated result without any additional commentary`;
+
+  if (detectTo === "wyw" || detectTo === "yue") generatedUserPrompt = `翻译成${targetLang}，只呈现翻译结果,不需要任何额外的评论`;
+  if (detectFrom === "wyw" || detectFrom === "zh-Hans" || detectFrom === "zh-Hant") {
+    if (detectTo === "zh-Hant") {
+      generatedUserPrompt = "翻译成繁体白话文，只呈现翻译结果,不需要任何额外的评论";
+    } else if (detectTo === "zh-Hans") {
+      generatedUserPrompt = "翻译成简体白话文，只呈现翻译结果,不需要任何额外的评论";
+    } else if (detectTo === "yue") generatedUserPrompt = "翻译成粤语白话文，只呈现翻译结果,不需要任何额外的评论";
   }
 
-  if (
-    query.detectFrom === 'wyw' ||
-    query.detectFrom === 'zh-Hans' ||
-    query.detectFrom === 'zh-Hant'
-  ) {
-    if (query.detectTo === 'zh-Hant') {
-      userPrompt = `${translationPrefixPrompt} to traditional Chinese`;
-    } else if (query.detectTo === 'zh-Hans') {
-      userPrompt = `${translationPrefixPrompt} to simplified Chinese`;
-    } else if (query.detectTo === 'yue') {
-      userPrompt = `${translationPrefixPrompt} to Cantonese`;
+  if (detectFrom === detectTo) {
+    generatedSystemPrompt = "You are an expert text embellisher. Your sole purpose is to enhance and elevate the given text without altering its core meaning or intent. Please refrain from interpreting or explaining the text. Just give me the result. Present only the refined result without any additional commentary.";
+    if (detectTo === "zh-Hant" || detectTo === "zh-Hans") {
+      generatedUserPrompt = "润色此句，只呈现翻译结果,不需要任何额外的评论";
+    } else {
+      generatedUserPrompt = "polish this sentence. Present only the refined result without any additional commentary:";
     }
   }
-  if (query.detectFrom === query.detectTo) {
-    userPrompt = `Polish the sentence in triple backticks to "${query.detectTo}"`;
-  }
 
-  userPrompt = `${userPrompt}:\n
-\`\`\`
-${query.text}
-\`\`\`
+  generatedUserPrompt = `${generatedUserPrompt}:\n\n${query.text}`
 
-Do not add any content or symbols that does not exist in the original text.
-`;
-
-  return userPrompt;
+  return {
+    generatedSystemPrompt: generatedSystemPrompt ?? SYSTEM_PROMPT,
+    generatedUserPrompt
+  };
 }
 
 /**
@@ -76,21 +70,34 @@ Do not add any content or symbols that does not exist in the original text.
  * @returns {{
  * model: string;
  * messages: {role: string; content: string}[];
+ * system: string;
+ * temperature: number;
  * max_tokens: number;
  * stream: boolean;
  * }}
  */
 function buildRequestBody(model, query) {
-  const prompt = generatePrompts(query);
-  $log.info(prompt);
+  const {generatedSystemPrompt, generatedUserPrompt} = generatePrompts(query);
+
+  // prompt
+  const replacePromptKeywords = (/** @type {string} */ prompt, /** @type {Bob.TranslateQuery} */ query) => {
+      if (!prompt) return prompt;
+      return prompt.replace("$text", query.text)
+          .replace("$sourceLang", query.detectFrom)
+          .replace("$targetLang", query.detectTo);
+  }
+  const customSystemPrompt = replacePromptKeywords($option.customSystemPrompt, query);
+  const customUserPrompt = replacePromptKeywords($option.customUserPrompt, query);
+  const systemPrompt = customSystemPrompt || generatedSystemPrompt;
+  const userPrompt = customUserPrompt || generatedUserPrompt;
+
+  $log.info(`System Prompt:${systemPrompt}\nUser Prompt:${userPrompt}`);
+
   return {
-    model,
-    messages: [
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
+    model: model,
+    messages: [{role: 'user', content: userPrompt}],
+    system: systemPrompt,
+    temperature: Number($option.temperature ?? 0.2),
     max_tokens: 4096,
     stream: true,
   };
@@ -217,7 +224,7 @@ function translate(query) {
     });
   }
 
-  const { model, apiKeys = '', apiUrl = 'https://api.anthropic.com' } = $option;
+  const {model, apiKeys, apiUrl, apiUrlPath} = $option;
   const apiKeySelection = apiKeys.split(',').map((key) => key.trim());
 
   if (!apiKeySelection.length) {
@@ -232,7 +239,10 @@ function translate(query) {
 
   const apiKey =
     apiKeySelection[Math.floor(Math.random() * apiKeySelection.length)];
-  const apiUrlPath = '/v1/messages';
+
+  const baseUrl = apiUrl || "https://api.anthropic.com";
+  const urlPath = apiUrlPath || "/v1/messages";
+
   const header = buildHeader(apiKey);
   const body = buildRequestBody(model, query);
 
@@ -241,7 +251,7 @@ function translate(query) {
 
     await $http.streamRequest({
       method: 'POST',
-      url: apiUrl + apiUrlPath,
+      url: baseUrl + urlPath,
       header,
       body,
       cancelSignal: query.cancelSignal,
