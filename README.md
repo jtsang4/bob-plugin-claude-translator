@@ -30,9 +30,11 @@
 
 ### 语言模型
 
-* `claude-v1.3` (默认使用): claude-v1 旧版本，效果稳定
-* `claude-instant-1`: claude 最新版 instant 模型
-* `claude-2`: claude 最新版模型
+[官网模型对比](https://docs.anthropic.com/en/docs/about-claude/models#model-comparison)
+* `Claude 3 Haiku` (默认使用): 最快最紧凑的型号,可实现近乎即时的响应
+* `Claude 3 Sonnet`: 智能和速度的平衡
+* `Claude 3 Opus`: 用于高度复杂任务的强大模型
+* `Claude 3.5 Sonnet`: 最智能的模型
 
 ## 使用方法
 

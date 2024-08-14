@@ -30,9 +30,11 @@ You can use the Claude API to polish and syntactically modify sentences, you jus
 
 ### Language Model
 
-* `claude-v1.3` (default): claude-v1 old version, the test results are relatively stable
-* `claude-instant-1`: the latest instant model of claude
-* `claude-2`: the latest model of claude
+[Model Comparison in official website](https://docs.anthropic.com/en/docs/about-claude/models#model-comparison)
+* `Claude 3 Haiku` (default): Fastest and most compact model for near-instant responsiveness
+* `Claude 3 Sonnet`: Balance of intelligence and speed
+* `Claude 3 Opus`: Powerful model for highly complex tasks
+* `Claude 3.5 Sonnet`: Most intelligent model
 
 ## Usage
 
