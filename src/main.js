@@ -22,7 +22,6 @@ function buildHeader(apiKey) {
     'Content-Type': 'application/json',
     'x-api-key': apiKey,
     'anthropic-version': '2023-06-01',
-    'anthropic-beta': 'messages-2023-12-15',
   };
 }
 
@@ -30,45 +29,35 @@ function buildHeader(apiKey) {
  * @param {Bob.TranslateQuery} query
  * @returns {string}
  */
+
 function generatePrompts(query) {
-  const translationPrefixPrompt = 'Please translate below text';
-  let userPrompt = `${translationPrefixPrompt} from "${
-    lang.langMap.get(query.detectFrom) || query.detectFrom
-  }" to "${lang.langMap.get(query.detectTo) || query.detectTo}"`;
+  // const translationPrefixPrompt = 'Please translate below text';
+  const sourceLanguage = lang.langMap.get(query.detectFrom) || query.detectFrom;
+  const targetLanguage = lang.langMap.get(query.detectTo) || query.detectTo;
+  
+  let userPrompt = '';
 
-  if (query.detectTo === 'wyw' || query.detectTo === 'yue') {
-    userPrompt = `${translationPrefixPrompt} to "${
-      lang.langMap.get(query.detectTo) || query.detectTo
-    }"`;
-  }
-
-  if (
-    query.detectFrom === 'wyw' ||
-    query.detectFrom === 'zh-Hans' ||
-    query.detectFrom === 'zh-Hant'
-  ) {
-    if (query.detectTo === 'zh-Hant') {
-      userPrompt = `${translationPrefixPrompt} to traditional Chinese`;
-    } else if (query.detectTo === 'zh-Hans') {
-      userPrompt = `${translationPrefixPrompt} to simplified Chinese`;
-    } else if (query.detectTo === 'yue') {
-      userPrompt = `${translationPrefixPrompt} to Cantonese`;
-    }
-  }
   if (query.detectFrom === query.detectTo) {
-    userPrompt = `Polish the sentence in triple backticks to "${query.detectTo}"`;
+    userPrompt = `Polish the following text, and the output must be in ${targetLanguage}:<user_query>${query.text}</user_query>`;
+} else {
+  if ($option.user_translation_prompt && $option.user_translation_prompt.trim() !== '') {
+      // 使用用户自定义提示，替换语言占位符
+      userPrompt = $option.user_translation_prompt
+          .replace('${sourceLanguage}', sourceLanguage)
+          .replace('${targetLanguage}', targetLanguage)
+          .replace('${query.text}', query.text);
+          // .replace('${translationPrefixPrompt}', translationPrefixPrompt);
+  } else {
+      // If the target language is the same as the original text, do not translate the text, but instead polish it
+          userPrompt = `Translate from ${sourceLanguage} to ${targetLanguage}:
+<user_query>${query.text}</user_query>
+Translate only the content within the tags. Maintain original formatting and do not add or remove any content.`;
+      }
   }
-
-  userPrompt = `${userPrompt}:\n
-\`\`\`
-${query.text}
-\`\`\`
-
-Do not add any content or symbols that does not exist in the original text.
-`;
-
   return userPrompt;
 }
+
+
 
 /**
  * @param {string} model
@@ -82,17 +71,26 @@ Do not add any content or symbols that does not exist in the original text.
  */
 function buildRequestBody(model, query) {
   const prompt = generatePrompts(query);
-  $log.info(prompt);
+  const systemMessage = $option.user_sys_prompt 
+      ? $option.user_sys_prompt
+          .replace('${sourceLanguage}', lang.langMap.get(query.detectFrom) || query.detectFrom)
+          .replace('${targetLanguage}', lang.langMap.get(query.detectTo) || query.detectTo)
+      : "You are a translator. Your task is to accurately translate the given text while preserving its original meaning, tone, and style. Respond only with the translated text. Do not add any explanations, introductions, or other text.";
+  
+  $log.info("Prompt: " + prompt);
+  $log.info("System Message: " + systemMessage);
+
   return {
-    model,
-    messages: [
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-    max_tokens: 4096,
-    stream: true,
+      model,
+      system: systemMessage,
+      messages: [
+          {
+              role: 'user',
+              content: prompt,
+          },
+      ],
+      max_tokens: 4096,
+      stream: true,
   };
 }
 
@@ -115,6 +113,7 @@ function handleError(query, result) {
     },
   });
 }
+
 /**
  * 解析流事件数据并根据事件类型进行处理
  * @param {string} line 从流中接收到的一行数据
@@ -208,73 +207,72 @@ function handleResponse(query, targetText, responseObj) {
  */
 function translate(query) {
   if (!lang.langMap.get(query.detectTo)) {
-    query.onCompletion({
-      error: {
-        type: 'unsupportLanguage',
-        message: '不支持该语种',
-        addtion: '不支持该语种',
-      },
-    });
+      return query.onCompletion({
+          error: {
+              type: 'unsupportLanguage',
+              message: '不支持该语种',
+              addtion: '不支持该语种',
+          },
+      });
   }
 
   const { model, apiKeys = '', apiUrl = 'https://api.anthropic.com' } = $option;
-  const apiKeySelection = apiKeys.split(',').map((key) => key.trim());
+  const apiKeySelection = apiKeys.split(',').map((key) => key.trim()).filter(Boolean);
 
   if (!apiKeySelection.length) {
-    query.onCompletion({
-      error: {
-        type: 'secretKey',
-        message: '配置错误 - 未填写 API Keys',
-        addtion: '请在插件配置中填写 API Keys',
-      },
-    });
+      return query.onCompletion({
+          error: {
+              type: 'secretKey',
+              message: '配置错误 - 未填写 API Keys',
+              addtion: '请在插件配置中填写 API Keys',
+          },
+      });
   }
 
-  const apiKey =
-    apiKeySelection[Math.floor(Math.random() * apiKeySelection.length)];
+  const apiKey = apiKeySelection[Math.floor(Math.random() * apiKeySelection.length)];
   const apiUrlPath = '/v1/messages';
   const header = buildHeader(apiKey);
   const body = buildRequestBody(model, query);
 
   (async () => {
-    let targetText = '';
-
-    await $http.streamRequest({
-      method: 'POST',
-      url: apiUrl + apiUrlPath,
-      header,
-      body,
-      cancelSignal: query.cancelSignal,
-      streamHandler: (streamData) => {
-        const lines = streamData.text.split('\n');
-        for (const line of lines) {
-          const parsedData = parseStreamData(line);
-          if (!parsedData) continue; // 如果解析不到数据则跳过
-
-          if (parsedData.eventType) {
-            // 根据事件类型做一些操作，例如记录日志等
-            $log.info(`Received event: ${parsedData.eventType}`);
-          } else if (parsedData.data) {
-            // 这里调用 handleResponse 或其他函数处理具体数据
-            targetText = handleResponse(query, targetText, parsedData.data);
-          }
-        }
-      },
-      handler: (result) => {
-        if (result.error || result.response.statusCode >= 400) {
-          handleError(query, result);
-        }
-      },
-    });
-  })().catch((err) => {
-    query.onCompletion({
-      error: {
-        type: err._type || 'unknown',
-        message: err._message || '未知错误',
-        addtion: err._addition,
-      },
-    });
-  });
+      let targetText = '';
+      try {
+          await $http.streamRequest({
+              method: 'POST',
+              url: apiUrl + apiUrlPath,
+              header,
+              body,
+              cancelSignal: query.cancelSignal,
+              streamHandler: (streamData) => {
+                  const lines = streamData.text.split('\n');
+                  for (const line of lines) {
+                      const parsedData = parseStreamData(line);
+                      if (!parsedData) continue; // 如果解析不到数据则跳过
+                      if (parsedData.eventType) {
+                          // 根据事件类型做一些操作，例如记录日志等
+                          $log.info(`Received event: ${parsedData.eventType}`);
+                      } else if (parsedData.data) {
+                          // 这里调用 handleResponse 或其他函数处理具体数据
+                          targetText = handleResponse(query, targetText, parsedData.data);
+                      }
+                  }
+              },
+              handler: (result) => {
+                  if (result.error || result.response.statusCode >= 400) {
+                      handleError(query, result);
+                  }
+              },
+          });
+      } catch (err) {
+          query.onCompletion({
+              error: {
+                  type: err._type || 'unknown',
+                  message: err._message || '未知错误',
+                  addtion: err._addition,
+              },
+          });
+      }
+  })();
 }
 
 exports.supportLanguages = supportLanguages;

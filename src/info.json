@@ -1,6 +1,6 @@
 {
   "identifier": "jtsang.claude.translator",
-  "version": "0.5.5",
+  "version": "0.6.0",
   "category": "translate",
   "name": "Claude Translator",
   "summary": "Claude powered translator",
@@ -39,10 +39,10 @@
       "identifier": "model",
       "type": "menu",
       "title": "模型",
-      "defaultValue": "claude-2.1",
+      "defaultValue": "claude-3-5-sonnet-20240620",
       "menuValues": [
         {
-          "title": "Claude 2.1",
+          "title": "Claude 2.1(模型过时，不推荐使用)",
           "value": "claude-2.1"
         },
         {
@@ -62,6 +62,19 @@
           "value": "claude-3-5-sonnet-20240620"
         }
       ]
+    },
+    {
+      "identifier": "user_translation_prompt",
+      "type": "text",
+      "title": "Claude提示词",
+      "desc": "使用${sourceLanguage}表示源语言, ${targetLanguage}表示目标语言, ${query.text}表示用户输入的文本。"
+    },
+    {
+      "identifier": "user_sys_prompt",
+      "type": "text",
+      "title": "以系统的身份告诉Claude他需要做什么",
+      "desc": "使用${sourceLanguage}表示源语言，${targetLanguage}表示目标语言"
+
     }
-  ]
+  ]      
 }
