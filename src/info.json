@@ -60,6 +60,10 @@
       "defaultValue": "claude-3-haiku-20240307",
       "menuValues": [
         {
+          "title": "Claude 3 Haiku",
+          "value": "claude-3-haiku-20240307"
+        },
+        {
           "title": "Claude 3 Opus",
           "value": "claude-3-opus-20240229"
         },
@@ -68,12 +72,12 @@
           "value": "claude-3-sonnet-20240229"
         },
         {
-          "title": "Claude 3 Haiku",
-          "value": "claude-3-haiku-20240307"
-        },
-        {
           "title": "Claude 3.5 Sonnet",
           "value": "claude-3-5-sonnet-20240620"
+        },
+        {
+          "title": "Claude 2.1(模型过时，不推荐使用)",
+          "value": "claude-2.1"
         }
       ]
     },
@@ -119,5 +123,5 @@
         ]
       }
     }
-  ]
+  ]     
 }

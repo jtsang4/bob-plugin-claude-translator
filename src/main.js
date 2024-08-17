@@ -64,6 +64,8 @@ function generatePrompts (query)  {
   };
 }
 
+
+
 /**
  * @param {string} model
  * @param {Bob.TranslateQuery} query
@@ -122,6 +124,7 @@ function handleError(query, result) {
     },
   });
 }
+
 /**
  * 解析流事件数据并根据事件类型进行处理
  * @param {string} line 从流中接收到的一行数据
@@ -215,27 +218,28 @@ function handleResponse(query, targetText, responseObj) {
  */
 function translate(query) {
   if (!lang.langMap.get(query.detectTo)) {
-    query.onCompletion({
-      error: {
-        type: 'unsupportLanguage',
-        message: '不支持该语种',
-        addtion: '不支持该语种',
-      },
-    });
+      return query.onCompletion({
+          error: {
+              type: 'unsupportLanguage',
+              message: '不支持该语种',
+              addtion: '不支持该语种',
+          },
+      });
   }
 
   const {model, apiKeys, apiUrl, apiUrlPath} = $option;
   const apiKeySelection = apiKeys.split(',').map((key) => key.trim());
 
   if (!apiKeySelection.length) {
-    query.onCompletion({
-      error: {
-        type: 'secretKey',
-        message: '配置错误 - 未填写 API Keys',
-        addtion: '请在插件配置中填写 API Keys',
-      },
-    });
+      return query.onCompletion({
+          error: {
+              type: 'secretKey',
+              message: '配置错误 - 未填写 API Keys',
+              addtion: '请在插件配置中填写 API Keys',
+          },
+      });
   }
+
 
   const apiKey =
     apiKeySelection[Math.floor(Math.random() * apiKeySelection.length)];
