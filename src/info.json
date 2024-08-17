@@ -22,38 +22,6 @@
       }
     },
     {
-      "identifier": "apiUrl",
-      "type": "text",
-      "title": "自定义 API Base URL",
-      "desc": "如果您的网络环境需要代理才能访问 Claude API, 可在这里修改为反代 API 的地址",
-      "textConfig": {
-        "type": "visible",
-        "placeholderText": "https://api.anthropic.com"
-      }
-    },
-    {
-      "identifier": "apiUrlPath",
-      "type": "text",
-      "title": "自定义 API URL Path",
-      "desc": "发送请求的Path",
-      "textConfig": {
-        "type": "visible",
-        "placeholderText": "/v1/messages"
-      }
-    },
-    {
-      "identifier": "request_mode",
-      "type": "menu",
-      "title": "请求方式",
-      "defaultValue": "stream",
-      "menuValues": [
-        {
-          "title": "流式请求",
-          "value": "stream"
-        }
-      ]
-    },
-    {
       "identifier": "model",
       "type": "menu",
       "title": "模型",
@@ -85,10 +53,10 @@
       "identifier": "temperature",
       "type": "text",
       "title": "温度",
-      "desc": "可选项。温度值越高，生成的文本越随机。默认值为 0.2（0~2）。",
+      "desc": "可选项。温度值越高，生成的文本越随机。默认值为 0.7（0~2）。",
       "textConfig": {
         "type": "visible",
-        "placeholderText": "0.2"
+        "placeholderText": "0.7"
       }
     },
     {
@@ -122,6 +90,38 @@
           "$targetLang"
         ]
       }
+    },
+    {
+      "identifier": "apiUrl",
+      "type": "text",
+      "title": "自定义 API Base URL",
+      "desc": "如果您的网络环境需要代理才能访问 Claude API, 可在这里修改为反代 API 的地址",
+      "textConfig": {
+        "type": "visible",
+        "placeholderText": "https://api.anthropic.com"
+      }
+    },
+    {
+      "identifier": "apiUrlPath",
+      "type": "text",
+      "title": "自定义 API URL Path",
+      "desc": "发送请求的Path",
+      "textConfig": {
+        "type": "visible",
+        "placeholderText": "/v1/messages"
+      }
+    },
+    {
+      "identifier": "request_mode",
+      "type": "menu",
+      "title": "请求方式",
+      "defaultValue": "stream",
+      "menuValues": [
+        {
+          "title": "流式请求",
+          "value": "stream"
+        }
+      ]
     }
   ]     
 }

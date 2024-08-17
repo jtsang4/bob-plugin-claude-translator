@@ -99,7 +99,7 @@ function buildRequestBody(model, query) {
     model: model,
     messages: [{role: 'user', content: userPrompt}],
     system: systemPrompt,
-    temperature: Number($option.temperature ?? 0.2),
+    temperature: Number($option.temperature ?? 0.7),
     max_tokens: 4096,
     stream: true,
   };
@@ -115,6 +115,9 @@ function handleError(query, result) {
   const reason = statusCode >= 400 && statusCode < 500 ? 'param' : 'api';
   const errorMessage =
     result.data && result.data.detail ? result.data.detail : '接口响应错误';
+
+  // Enhanced error logging
+  $log.error(`Translation error: ${errorMessage}. Status code: ${statusCode}. Full response: ${JSON.stringify(result)}`);
 
   query.onCompletion({
     error: {
@@ -217,6 +220,27 @@ function handleResponse(query, targetText, responseObj) {
  * @type {Bob.Translate}
  */
 function translate(query) {
+  // Input validation
+  if (!query || typeof query !== 'object') {
+    return query.onCompletion({
+      error: {
+        type: 'param',
+        message: 'Invalid query object',
+        addtion: 'Query must be a valid object',
+      },
+    });
+  }
+
+  if (!query.text || typeof query.text !== 'string' || query.text.trim() === '') {
+    return query.onCompletion({
+      error: {
+        type: 'param',
+        message: 'Invalid input text',
+        addtion: 'Input text must be a non-empty string',
+      },
+    });
+  }
+
   if (!lang.langMap.get(query.detectTo)) {
       return query.onCompletion({
           error: {
