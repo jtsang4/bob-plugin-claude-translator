@@ -30,9 +30,11 @@
 
 ### 语言模型
 
-* `claude 3 Haiku` Claude快速的模型
-* `claude 3.5 Sonnet`: Claude最新最智能模型（推荐使用）
-* `claude 3 Opus`: 适合复杂逻辑和写作的模型
+[官网模型对比](https://docs.anthropic.com/en/docs/about-claude/models#model-comparison)
+* `Claude 3 Haiku` (默认使用): 最快最紧凑的型号,可实现近乎即时的响应
+* `Claude 3 Sonnet`: 智能和速度的平衡
+* `Claude 3 Opus`: 用于高度复杂任务的强大模型
+* `Claude 3.5 Sonnet`: 最智能的模型
 
 ## 使用方法
 

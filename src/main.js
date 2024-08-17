@@ -13,7 +13,6 @@ function supportLanguages() {
  * "Content-Type": string;
  * "x-api-key": string;
  * "anthropic-version": string;
- * "anthropic-beta": string;
  * }} The header object.
  */
 function buildHeader(apiKey) {
@@ -27,34 +26,42 @@ function buildHeader(apiKey) {
 
 /**
  * @param {Bob.TranslateQuery} query
- * @returns {string}
+ * @returns {{generatedSystemPrompt: string, generatedUserPrompt: string}}
  */
+function generatePrompts (query)  {
+ const SYSTEM_PROMPT = "You are an expert translator. Your task is to accurately translate the given text without altering its original meaning, tone, and style. Present only the translated result without any additional commentary.";
 
-function generatePrompts(query) {
-  // const translationPrefixPrompt = 'Please translate below text';
-  const sourceLanguage = lang.langMap.get(query.detectFrom) || query.detectFrom;
-  const targetLanguage = lang.langMap.get(query.detectTo) || query.detectTo;
-  
-  let userPrompt = '';
+  let generatedSystemPrompt = null;
+  const detectFrom =  query.detectFrom
+  const detectTo =  query.detectTo
+  const sourceLang = lang.langMap.get(detectFrom) || detectFrom;
+  const targetLang = lang.langMap.get(detectTo) || detectTo;
+  let generatedUserPrompt = `Please translate below text from ${sourceLang} to ${targetLang}. Present only the translated result without any additional commentary`;
 
-  if (query.detectFrom === query.detectTo) {
-    userPrompt = `Polish the following text, and the output must be in ${targetLanguage}:<user_query>${query.text}</user_query>`;
-} else {
-  if ($option.user_translation_prompt && $option.user_translation_prompt.trim() !== '') {
-      // 使用用户自定义提示，替换语言占位符
-      userPrompt = $option.user_translation_prompt
-          .replace('${sourceLanguage}', sourceLanguage)
-          .replace('${targetLanguage}', targetLanguage)
-          .replace('${query.text}', query.text);
-          // .replace('${translationPrefixPrompt}', translationPrefixPrompt);
-  } else {
-      // If the target language is the same as the original text, do not translate the text, but instead polish it
-          userPrompt = `Translate from ${sourceLanguage} to ${targetLanguage}:
-<user_query>${query.text}</user_query>
-Translate only the content within the tags. Maintain original formatting and do not add or remove any content.`;
-      }
+  if (detectTo === "wyw" || detectTo === "yue") generatedUserPrompt = `翻译成${targetLang}，只呈现翻译结果,不需要任何额外的评论`;
+  if (detectFrom === "wyw" || detectFrom === "zh-Hans" || detectFrom === "zh-Hant") {
+    if (detectTo === "zh-Hant") {
+      generatedUserPrompt = "翻译成繁体白话文，只呈现翻译结果,不需要任何额外的评论";
+    } else if (detectTo === "zh-Hans") {
+      generatedUserPrompt = "翻译成简体白话文，只呈现翻译结果,不需要任何额外的评论";
+    } else if (detectTo === "yue") generatedUserPrompt = "翻译成粤语白话文，只呈现翻译结果,不需要任何额外的评论";
   }
-  return userPrompt;
+
+  if (detectFrom === detectTo) {
+    generatedSystemPrompt = "You are an expert text embellisher. Your sole purpose is to enhance and elevate the given text without altering its core meaning or intent. Please refrain from interpreting or explaining the text. Just give me the result. Present only the refined result without any additional commentary.";
+    if (detectTo === "zh-Hant" || detectTo === "zh-Hans") {
+      generatedUserPrompt = "润色此句，只呈现翻译结果,不需要任何额外的评论";
+    } else {
+      generatedUserPrompt = "polish this sentence. Present only the refined result without any additional commentary:";
+    }
+  }
+
+  generatedUserPrompt = `${generatedUserPrompt}:\n\n${query.text}`
+
+  return {
+    generatedSystemPrompt: generatedSystemPrompt ?? SYSTEM_PROMPT,
+    generatedUserPrompt
+  };
 }
 
 
@@ -65,32 +72,36 @@ Translate only the content within the tags. Maintain original formatting and do 
  * @returns {{
  * model: string;
  * messages: {role: string; content: string}[];
+ * system: string;
+ * temperature: number;
  * max_tokens: number;
  * stream: boolean;
  * }}
  */
 function buildRequestBody(model, query) {
-  const prompt = generatePrompts(query);
-  const systemMessage = $option.user_sys_prompt 
-      ? $option.user_sys_prompt
-          .replace('${sourceLanguage}', lang.langMap.get(query.detectFrom) || query.detectFrom)
-          .replace('${targetLanguage}', lang.langMap.get(query.detectTo) || query.detectTo)
-      : "You are a translator. Your task is to accurately translate the given text while preserving its original meaning, tone, and style. Respond only with the translated text. Do not add any explanations, introductions, or other text.";
-  
-  $log.info("Prompt: " + prompt);
-  $log.info("System Message: " + systemMessage);
+  const {generatedSystemPrompt, generatedUserPrompt} = generatePrompts(query);
+
+  // prompt
+  const replacePromptKeywords = (/** @type {string} */ prompt, /** @type {Bob.TranslateQuery} */ query) => {
+      if (!prompt) return prompt;
+      return prompt.replace("$text", query.text)
+          .replace("$sourceLang", query.detectFrom)
+          .replace("$targetLang", query.detectTo);
+  }
+  const customSystemPrompt = replacePromptKeywords($option.customSystemPrompt, query);
+  const customUserPrompt = replacePromptKeywords($option.customUserPrompt, query);
+  const systemPrompt = customSystemPrompt || generatedSystemPrompt;
+  const userPrompt = customUserPrompt || generatedUserPrompt;
+
+  $log.info(`System Prompt:${systemPrompt}\nUser Prompt:${userPrompt}`);
 
   return {
-      model,
-      system: systemMessage,
-      messages: [
-          {
-              role: 'user',
-              content: prompt,
-          },
-      ],
-      max_tokens: 4096,
-      stream: true,
+    model: model,
+    messages: [{role: 'user', content: userPrompt}],
+    system: systemPrompt,
+    temperature: Number($option.temperature ?? 0.2),
+    max_tokens: 4096,
+    stream: true,
   };
 }
 
@@ -216,8 +227,8 @@ function translate(query) {
       });
   }
 
-  const { model, apiKeys = '', apiUrl = 'https://api.anthropic.com' } = $option;
-  const apiKeySelection = apiKeys.split(',').map((key) => key.trim()).filter(Boolean);
+  const {model, apiKeys, apiUrl, apiUrlPath} = $option;
+  const apiKeySelection = apiKeys.split(',').map((key) => key.trim());
 
   if (!apiKeySelection.length) {
       return query.onCompletion({
@@ -229,50 +240,55 @@ function translate(query) {
       });
   }
 
-  const apiKey = apiKeySelection[Math.floor(Math.random() * apiKeySelection.length)];
-  const apiUrlPath = '/v1/messages';
+
+  const apiKey =
+    apiKeySelection[Math.floor(Math.random() * apiKeySelection.length)];
+
+  const baseUrl = apiUrl || "https://api.anthropic.com";
+  const urlPath = apiUrlPath || "/v1/messages";
+
   const header = buildHeader(apiKey);
   const body = buildRequestBody(model, query);
 
   (async () => {
-      let targetText = '';
-      try {
-          await $http.streamRequest({
-              method: 'POST',
-              url: apiUrl + apiUrlPath,
-              header,
-              body,
-              cancelSignal: query.cancelSignal,
-              streamHandler: (streamData) => {
-                  const lines = streamData.text.split('\n');
-                  for (const line of lines) {
-                      const parsedData = parseStreamData(line);
-                      if (!parsedData) continue; // 如果解析不到数据则跳过
-                      if (parsedData.eventType) {
-                          // 根据事件类型做一些操作，例如记录日志等
-                          $log.info(`Received event: ${parsedData.eventType}`);
-                      } else if (parsedData.data) {
-                          // 这里调用 handleResponse 或其他函数处理具体数据
-                          targetText = handleResponse(query, targetText, parsedData.data);
-                      }
-                  }
-              },
-              handler: (result) => {
-                  if (result.error || result.response.statusCode >= 400) {
-                      handleError(query, result);
-                  }
-              },
-          });
-      } catch (err) {
-          query.onCompletion({
-              error: {
-                  type: err._type || 'unknown',
-                  message: err._message || '未知错误',
-                  addtion: err._addition,
-              },
-          });
-      }
-  })();
+    let targetText = '';
+
+    await $http.streamRequest({
+      method: 'POST',
+      url: baseUrl + urlPath,
+      header,
+      body,
+      cancelSignal: query.cancelSignal,
+      streamHandler: (streamData) => {
+        const lines = streamData.text.split('\n');
+        for (const line of lines) {
+          const parsedData = parseStreamData(line);
+          if (!parsedData) continue; // 如果解析不到数据则跳过
+
+          if (parsedData.eventType) {
+            // 根据事件类型做一些操作，例如记录日志等
+            $log.info(`Received event: ${parsedData.eventType}`);
+          } else if (parsedData.data) {
+            // 这里调用 handleResponse 或其他函数处理具体数据
+            targetText = handleResponse(query, targetText, parsedData.data);
+          }
+        }
+      },
+      handler: (result) => {
+        if (result.error || result.response.statusCode >= 400) {
+          handleError(query, result);
+        }
+      },
+    });
+  })().catch((err) => {
+    query.onCompletion({
+      error: {
+        type: err._type || 'unknown',
+        message: err._message || '未知错误',
+        addtion: err._addition,
+      },
+    });
+  });
 }
 
 exports.supportLanguages = supportLanguages;
