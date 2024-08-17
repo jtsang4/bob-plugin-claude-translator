@@ -2,6 +2,13 @@
   "identifier": "jtsang.claude.translator",
   "versions": [
     {
+      "version": "0.6.0",
+      "desc": "feat: support claude3 and claude3-5 models and custom prompt",
+      "sha256": "13282aaac1119ec1b29ad23b92bc3456b9c13a14a40255de8a3f1ab37b046244",
+      "url": "https://github.com/jtsang4/bob-plugin-claude-translator/releases/download/v0.6.0/claude-translator-0.6.0.bobplugin",
+      "minBobVersion": "0.5.0"
+    },
+    {
       "version": "0.5.5",
       "desc": "Merge pull request #13 from OctaDevelop/patch-1",
       "sha256": "b42aadf99896cd892d579d83de8669decc8aef26e8f035570b3416bc2ac900dd",
