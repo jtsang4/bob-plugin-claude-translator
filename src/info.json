@@ -33,7 +33,7 @@
         },
         {
           "title": "Claude 3 Opus",
-          "value": "claude-3-opus-20240229"
+          "value": "claude-3-opus-latest"
         },
         {
           "title": "Claude 3 Sonnet",
@@ -41,7 +41,7 @@
         },
         {
           "title": "Claude 3.5 Sonnet",
-          "value": "claude-3-5-sonnet-20240620"
+          "value": "claude-3-5-sonnet-latest"
         },
         {
           "title": "Claude 2.1(模型过时，不推荐使用)",
